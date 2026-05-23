@@ -7,23 +7,26 @@ import {KothBank, IERC20} from "../src/KothBank.sol";
 
 contract KothBankTest is Test {
     MockERC20 token;
-    KothBank  bank;
+    KothBank bank;
     address alice = makeAddr("alice");
-    address bob   = makeAddr("bob");
+    address bob = makeAddr("bob");
 
     function setUp() public {
         token = new MockERC20("KOTH", "KOTH", address(this), 10_000 ether);
-        bank  = new KothBank(IERC20(address(token)));
+        bank = new KothBank(IERC20(address(token)));
         token.transfer(alice, 1_000 ether);
-        token.transfer(bob,   1_000 ether);
-        vm.prank(alice); token.approve(address(bank), type(uint256).max);
-        vm.prank(bob);   token.approve(address(bank), type(uint256).max);
+        token.transfer(bob, 1_000 ether);
+        vm.prank(alice);
+        token.approve(address(bank), type(uint256).max);
+        vm.prank(bob);
+        token.approve(address(bank), type(uint256).max);
     }
 
     function _bump(address who, uint256 amount) internal {
         vm.prank(who);
         bank.bump(amount);
     }
+
     function _withdraw(address who, uint256 amount) internal {
         vm.prank(who);
         bank.withdraw(amount);
@@ -48,10 +51,10 @@ contract KothBankTest is Test {
     }
 
     function test_FrozenKingExploit() public {
-        _bump(alice, 100 ether);            // alice is king at 100
+        _bump(alice, 100 ether); // alice is king at 100
         assertEq(bank.kingScore(), 100 ether);
 
-        _withdraw(alice, 100 ether);        // 🚨 alice still king, kingScore still 100
+        _withdraw(alice, 100 ether); // 🚨 alice still king, kingScore still 100
         assertEq(bank.king(), alice, "still king after withdraw");
         assertEq(bank.kingScore(), 100 ether, "kingScore unchanged");
 

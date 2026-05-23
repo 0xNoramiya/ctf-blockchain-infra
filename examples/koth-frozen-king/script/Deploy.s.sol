@@ -12,7 +12,7 @@ contract Deploy is Script {
 
         vm.startBroadcast(deployerKey);
         MockERC20 token = new MockERC20("KOTH Token", "KOTH", vm.addr(deployerKey), 1_000_000 ether);
-        KothBank  bank  = new KothBank(IERC20(address(token)));
+        KothBank bank = new KothBank(IERC20(address(token)));
         if (mintTo > 0) {
             token.transfer(vm.envAddress("INITIAL_DROP_TO"), mintTo);
         }

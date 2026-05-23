@@ -21,7 +21,7 @@ import {Amm, IERC20} from "./Amm.sol";
 ///   - Per-block borrow caps.
 ///   - Disallow same-block deposit + borrow.
 contract LendingVault {
-    Amm    public immutable amm;
+    Amm public immutable amm;
     IERC20 public immutable tokenA;
     IERC20 public immutable tokenB;
     uint256 public constant SOLVE_THRESHOLD = 100_000 ether;
@@ -30,7 +30,7 @@ contract LendingVault {
     mapping(address => uint256) public debt;
 
     constructor(Amm _amm) {
-        amm    = _amm;
+        amm = _amm;
         tokenA = _amm.tokenA();
         tokenB = _amm.tokenB();
     }

@@ -21,18 +21,22 @@ interface IERC20 {
 /// from a leaderboard, or require king to maintain a minimum balance,
 /// or use highest-balance-since-block-N semantics.
 contract KothBank {
-    IERC20  public immutable token;
+    IERC20 public immutable token;
     mapping(address => uint256) public score;
     address public king;
     uint256 public kingScore;
 
     event Crowned(address indexed newKing, address indexed oldKing, uint256 score);
 
-    constructor(IERC20 _token) { token = _token; }
+    constructor(IERC20 _token) {
+        token = _token;
+    }
 
     function bump(uint256 amount) external {
         require(token.transferFrom(msg.sender, address(this), amount), "tf");
-        unchecked { score[msg.sender] += amount; }
+        unchecked {
+            score[msg.sender] += amount;
+        }
         if (score[msg.sender] > kingScore) {
             emit Crowned(msg.sender, king, score[msg.sender]);
             kingScore = score[msg.sender];
@@ -42,7 +46,9 @@ contract KothBank {
 
     function withdraw(uint256 amount) external {
         require(score[msg.sender] >= amount, "balance");
-        unchecked { score[msg.sender] -= amount; }
+        unchecked {
+            score[msg.sender] -= amount;
+        }
         require(token.transfer(msg.sender, amount), "tf");
         // 🚨 missing: if (msg.sender == king) { kingScore = score[msg.sender]; }
         //             plus a re-election step.

@@ -37,23 +37,30 @@ contract Deploy is Script {
 
         vm.stopBroadcast();
 
-        console2.log(string.concat(
-            "CTF_META={\"target\":\"",
-            _hex(address(vault)),
-            "\",\"extra\":{\"amm\":\"", _hex(address(amm)),
-            "\",\"tokenA\":\"", _hex(address(a)),
-            "\",\"tokenB\":\"", _hex(address(b)), "\"}}"
-        ));
+        console2.log(
+            string.concat(
+                "CTF_META={\"target\":\"",
+                _hex(address(vault)),
+                "\",\"extra\":{\"amm\":\"",
+                _hex(address(amm)),
+                "\",\"tokenA\":\"",
+                _hex(address(a)),
+                "\",\"tokenB\":\"",
+                _hex(address(b)),
+                "\"}}"
+            )
+        );
     }
 
     function _hex(address a) private pure returns (string memory) {
         bytes20 b = bytes20(a);
         bytes memory s = new bytes(42);
         bytes16 alphabet = 0x30313233343536373839616263646566;
-        s[0] = "0"; s[1] = "x";
+        s[0] = "0";
+        s[1] = "x";
         for (uint256 i = 0; i < 20; i++) {
-            s[2 + i*2]     = alphabet[uint8(b[i]) >> 4];
-            s[2 + i*2 + 1] = alphabet[uint8(b[i]) & 0x0f];
+            s[2 + i * 2] = alphabet[uint8(b[i]) >> 4];
+            s[2 + i * 2 + 1] = alphabet[uint8(b[i]) & 0x0f];
         }
         return string(s);
     }

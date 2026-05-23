@@ -19,7 +19,10 @@ contract Amm {
     event Sync(uint112 reserveA, uint112 reserveB);
     event Swap(address indexed who, uint256 inA, uint256 inB, uint256 outA, uint256 outB);
 
-    constructor(IERC20 _a, IERC20 _b) { tokenA = _a; tokenB = _b; }
+    constructor(IERC20 _a, IERC20 _b) {
+        tokenA = _a;
+        tokenB = _b;
+    }
 
     function seed(uint112 a, uint112 b) external {
         require(reserveA == 0 && reserveB == 0, "seeded");

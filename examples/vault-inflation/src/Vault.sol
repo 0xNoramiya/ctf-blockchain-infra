@@ -27,7 +27,9 @@ contract Vault {
     mapping(address => uint256) public balanceOf;
     uint256 public totalShares;
 
-    constructor(IERC20 _asset) { asset = _asset; }
+    constructor(IERC20 _asset) {
+        asset = _asset;
+    }
 
     function totalAssets() public view returns (uint256) {
         return asset.balanceOf(address(this));

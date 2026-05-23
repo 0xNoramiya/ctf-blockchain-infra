@@ -12,9 +12,9 @@ interface IApprove {
 /// `triggerVictimDeposit()`. This gives the player full control over
 /// the deposit ordering relative to their own actions.
 contract Depositor {
-    Vault  public immutable vault;
+    Vault public immutable vault;
     IERC20 public immutable asset;
-    bool   public triggered;
+    bool public triggered;
 
     constructor(Vault _vault) {
         vault = _vault;

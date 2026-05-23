@@ -19,14 +19,14 @@ interface IERC20 {
 /// → one valid signature is reusable forever.
 contract VaultPool is IChallenge {
     address public immutable signer;
-    IERC20  public immutable token;
+    IERC20 public immutable token;
 
     uint256 public constant AUTHORIZED_AMOUNT = 100 ether;
-    uint256 public constant SOLVE_THRESHOLD  = 1000 ether;
+    uint256 public constant SOLVE_THRESHOLD = 1000 ether;
 
     constructor(address _signer, IERC20 _token) {
         signer = _signer;
-        token  = _token;
+        token = _token;
     }
 
     function withdraw(address to, uint256 amount, bytes calldata sig) external {
@@ -48,9 +48,9 @@ contract VaultPool is IChallenge {
         bytes32 vs;
         uint8 v;
         assembly {
-            r  := calldataload(s.offset)
+            r := calldataload(s.offset)
             vs := calldataload(add(s.offset, 32))
-            v  := shr(248, calldataload(add(s.offset, 64)))
+            v := shr(248, calldataload(add(s.offset, 64)))
         }
         if (v < 27) v += 27;
         return ecrecover(d, v, r, vs);

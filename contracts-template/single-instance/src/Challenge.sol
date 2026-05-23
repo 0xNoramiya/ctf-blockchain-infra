@@ -26,7 +26,14 @@ contract Challenge is IChallenge {
         return _check(player);
     }
 
-    function _check(address /*player*/) internal view virtual returns (bool) {
+    function _check(
+        address /*player*/
+    )
+        internal
+        view
+        virtual
+        returns (bool)
+    {
         return false;
     }
 }

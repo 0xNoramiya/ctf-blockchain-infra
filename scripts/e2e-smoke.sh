@@ -61,7 +61,7 @@ deploy_example() {
   note "$tag: deploy"
   local out
   out=$(cd "$dir" && DEPLOYER_KEY="$DEPLOYER_KEY" SIGNER_ADDRESS="$SIGNER_ADDR" "$@" \
-        forge script script/Deploy.s.sol --rpc-url "$RPC_URL" --broadcast --silent 2>&1)
+        forge script script/Deploy.s.sol --rpc-url "$RPC_URL" --broadcast 2>&1)
   echo "$out" > "$SCRATCH/$tag.deploy.log"
   printf '%s' "$out"
 }

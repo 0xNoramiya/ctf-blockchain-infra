@@ -21,10 +21,10 @@ contract PermitVaultTest is Test {
         token = new MockERC20("Permit Token", "PT", address(this), 1_000_000 ether);
         vault = new PermitVault(signer, IERC20(address(token)));
         token.transfer(address(vault), 1_000_000 ether);
-        AMOUNT    = vault.AUTHORIZED_AMOUNT();
+        AMOUNT = vault.AUTHORIZED_AMOUNT();
         THRESHOLD = vault.SOLVE_THRESHOLD();
-        TYPEHASH  = vault.PERMIT_TYPEHASH();
-        DOMAIN    = vault.DOMAIN_SEPARATOR();
+        TYPEHASH = vault.PERMIT_TYPEHASH();
+        DOMAIN = vault.DOMAIN_SEPARATOR();
     }
 
     function _signPermit(address spender, uint256 amount, uint256 deadline) internal view returns (bytes memory) {
@@ -46,7 +46,7 @@ contract PermitVaultTest is Test {
         uint256 deadline = block.timestamp + 1 hours;
         bytes memory sig = _signPermit(player, AMOUNT, deadline);
         vm.startPrank(player);
-        for (uint i = 0; i < 10; i++) {
+        for (uint256 i = 0; i < 10; i++) {
             vault.permit(AMOUNT, deadline, sig);
         }
         vm.stopPrank();

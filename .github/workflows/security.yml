@@ -40,7 +40,7 @@ jobs:
           docker build -t ctf-${{ matrix.name }}:scan ${{ matrix.context }}
 
       - name: Run Trivy
-        uses: aquasecurity/trivy-action@0.28.0
+        uses: aquasecurity/trivy-action@0.35.0
         with:
           image-ref: ctf-${{ matrix.name }}:scan
           format: sarif
@@ -57,7 +57,7 @@ jobs:
 
       - name: Fail on CRITICAL/HIGH (PR builds only)
         if: github.event_name == 'pull_request'
-        uses: aquasecurity/trivy-action@0.28.0
+        uses: aquasecurity/trivy-action@0.35.0
         with:
           image-ref: ctf-${{ matrix.name }}:scan
           severity: CRITICAL,HIGH

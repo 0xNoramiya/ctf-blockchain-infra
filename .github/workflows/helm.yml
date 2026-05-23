@@ -37,9 +37,12 @@ jobs:
           > /tmp/rendered.yaml
           wc -l /tmp/rendered.yaml
 
-      - name: kubectl client-side dry-run
+      - name: kubectl client-side validate
         run: |
           curl -fsSLo /usr/local/bin/kubectl \
             "https://dl.k8s.io/release/$(curl -fsSL https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
           chmod +x /usr/local/bin/kubectl
-          kubectl --dry-run=client apply -f /tmp/rendered.yaml
+          # --validate=false skips the schema fetch from an apiserver
+          # that doesn't exist on the runner; we just want to confirm
+          # kubectl can parse the rendered manifests.
+          kubectl --dry-run=client --validate=false apply -f /tmp/rendered.yaml

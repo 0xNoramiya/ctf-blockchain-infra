@@ -1,11 +1,11 @@
 # syntax=docker/dockerfile:1.7
-FROM node:20-alpine AS deps
+FROM node:26-alpine AS deps
 WORKDIR /app
 COPY package.json package-lock.json* ./
 RUN --mount=type=cache,target=/root/.npm \
     npm ci --omit=dev || npm install --omit=dev
 
-FROM node:20-alpine AS runtime
+FROM node:26-alpine AS runtime
 RUN addgroup -S app && adduser -S app -G app
 WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules

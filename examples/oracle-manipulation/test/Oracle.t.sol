@@ -61,7 +61,7 @@ contract OracleManipulationTest is Test {
     function test_BystanderWithoutCollateralCannotBorrow() public {
         address bystander = makeAddr("bystander");
         vm.startPrank(bystander);
-        vm.expectRevert(bytes("undercollateralized"));
+        vm.expectRevert(abi.encodeWithSignature("Error(string)", "undercollateralized"));
         vault.borrow(1 ether);
         vm.stopPrank();
     }

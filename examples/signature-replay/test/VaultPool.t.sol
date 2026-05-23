@@ -11,12 +11,16 @@ contract VaultPoolTest is Test {
     uint256   signerKey = 0xA11CE;
     address   signer;
     address   player = makeAddr("player");
+    uint256   AMOUNT;
+    uint256   THRESHOLD;
 
     function setUp() public {
         signer = vm.addr(signerKey);
         token = new MockERC20("Vault Token", "VLT", address(this), 1_000_000 ether);
         pool  = new VaultPool(signer, IERC20(address(token)));
         token.transfer(address(pool), 1_000_000 ether);
+        AMOUNT    = pool.AUTHORIZED_AMOUNT();
+        THRESHOLD = pool.SOLVE_THRESHOLD();
     }
 
     function _sign(address to, uint256 amount) internal view returns (bytes memory) {
@@ -27,37 +31,37 @@ contract VaultPoolTest is Test {
     }
 
     function test_OneWithdrawWorks() public {
-        bytes memory sig = _sign(player, pool.AUTHORIZED_AMOUNT());
+        bytes memory sig = _sign(player, AMOUNT);
         vm.prank(player);
-        pool.withdraw(player, pool.AUTHORIZED_AMOUNT(), sig);
+        pool.withdraw(player, AMOUNT, sig);
         assertEq(token.balanceOf(player), 100 ether);
     }
 
     function test_ReplayDrainsToSolve() public {
-        bytes memory sig = _sign(player, pool.AUTHORIZED_AMOUNT());
+        bytes memory sig = _sign(player, AMOUNT);
         vm.startPrank(player);
         for (uint i = 0; i < 10; i++) {
-            pool.withdraw(player, pool.AUTHORIZED_AMOUNT(), sig);
+            pool.withdraw(player, AMOUNT, sig);
         }
         vm.stopPrank();
-        assertGe(token.balanceOf(player), pool.SOLVE_THRESHOLD());
+        assertGe(token.balanceOf(player), THRESHOLD);
         assertTrue(pool.isSolved(player), "should be solved at threshold");
     }
 
     function test_BystanderCannotReplaySignerForPlayer() public {
-        bytes memory sig = _sign(player, pool.AUTHORIZED_AMOUNT());
-        // The require(msg.sender == to) gate stops a bystander from
-        // collecting on the player's signature.
+        bytes memory sig = _sign(player, AMOUNT);
         address bystander = makeAddr("bystander");
         vm.prank(bystander);
-        vm.expectRevert(bytes("only recipient"));
-        pool.withdraw(player, pool.AUTHORIZED_AMOUNT(), sig);
+        vm.expectRevert(abi.encodeWithSignature("Error(string)", "only recipient"));
+        pool.withdraw(player, AMOUNT, sig);
     }
 
     function test_WrongAmountReverts() public {
-        bytes memory sig = _sign(player, pool.AUTHORIZED_AMOUNT());
+        bytes memory sig = _sign(player, AMOUNT);
+        // The contract checks the signature first; passing 200 ether
+        // produces a different digest, which recovers to a non-signer.
         vm.prank(player);
-        vm.expectRevert(bytes("tf"));
+        vm.expectRevert(abi.encodeWithSignature("Error(string)", "bad sig"));
         pool.withdraw(player, 200 ether, sig);
     }
 }

@@ -33,7 +33,7 @@ contract FactoryTest is Test {
     function test_DoubleSpawnReverts() public {
         vm.startPrank(alice);
         f.spawn();
-        vm.expectRevert(bytes("already spawned"));
+        vm.expectRevert(abi.encodeWithSignature("Error(string)", "already spawned"));
         f.spawn();
         vm.stopPrank();
     }

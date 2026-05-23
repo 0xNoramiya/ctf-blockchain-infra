@@ -1,8 +1,8 @@
 [profile.default]
 src = "src"
 out = "out"
-libs = ["lib", "../../contracts-template/lib"]
+libs = ["lib"]
 solc_version = "0.8.24"
 optimizer = true
 optimizer_runs = 200
-remappings = ["@infra/=../../contracts-template/lib/"]
+remappings = ["@infra/=lib/ctf-infra/"]

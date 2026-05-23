@@ -53,8 +53,9 @@ ok "anvil up"
 
 deploy_example() {
   local dir="$1" tag="$2"; shift 2
-  note "$tag: forge install + build"
-  (cd "$dir" && forge install foundry-rs/forge-std >/dev/null 2>&1 || true)
+  note "$tag: sync lib + forge install + build"
+  bash "$REPO_ROOT/scripts/sync-lib.sh" >/dev/null
+  (cd "$dir" && forge install foundry-rs/forge-std@v1.10.0 >/dev/null 2>&1 || true)
   (cd "$dir" && forge build --silent)
 
   note "$tag: deploy"

@@ -11,58 +11,64 @@ contract PermitVaultTest is Test {
     uint256 signerKey = 0xB0B;
     address signer;
     address player = makeAddr("player");
+    uint256 AMOUNT;
+    uint256 THRESHOLD;
+    bytes32 TYPEHASH;
+    bytes32 DOMAIN;
 
     function setUp() public {
         signer = vm.addr(signerKey);
         token = new MockERC20("Permit Token", "PT", address(this), 1_000_000 ether);
         vault = new PermitVault(signer, IERC20(address(token)));
         token.transfer(address(vault), 1_000_000 ether);
+        AMOUNT    = vault.AUTHORIZED_AMOUNT();
+        THRESHOLD = vault.SOLVE_THRESHOLD();
+        TYPEHASH  = vault.PERMIT_TYPEHASH();
+        DOMAIN    = vault.DOMAIN_SEPARATOR();
     }
 
     function _signPermit(address spender, uint256 amount, uint256 deadline) internal view returns (bytes memory) {
-        bytes32 structHash = keccak256(abi.encode(
-            vault.PERMIT_TYPEHASH(),
-            spender, amount, deadline
-        ));
-        bytes32 digest = keccak256(abi.encodePacked("\x19\x01", vault.DOMAIN_SEPARATOR(), structHash));
+        bytes32 structHash = keccak256(abi.encode(TYPEHASH, spender, amount, deadline));
+        bytes32 digest = keccak256(abi.encodePacked("\x19\x01", DOMAIN, structHash));
         (uint8 v, bytes32 r, bytes32 s) = vm.sign(signerKey, digest);
         return abi.encodePacked(r, s, v);
     }
 
     function test_OnePermitWorks() public {
-        bytes memory sig = _signPermit(player, vault.AUTHORIZED_AMOUNT(), block.timestamp + 1 hours);
+        uint256 deadline = block.timestamp + 1 hours;
+        bytes memory sig = _signPermit(player, AMOUNT, deadline);
         vm.prank(player);
-        vault.permit(vault.AUTHORIZED_AMOUNT(), block.timestamp + 1 hours, sig);
+        vault.permit(AMOUNT, deadline, sig);
         assertEq(token.balanceOf(player), 100 ether);
     }
 
     function test_ReplayDrainsToSolve() public {
         uint256 deadline = block.timestamp + 1 hours;
-        bytes memory sig = _signPermit(player, vault.AUTHORIZED_AMOUNT(), deadline);
+        bytes memory sig = _signPermit(player, AMOUNT, deadline);
         vm.startPrank(player);
         for (uint i = 0; i < 10; i++) {
-            vault.permit(vault.AUTHORIZED_AMOUNT(), deadline, sig);
+            vault.permit(AMOUNT, deadline, sig);
         }
         vm.stopPrank();
-        assertGe(token.balanceOf(player), vault.SOLVE_THRESHOLD());
+        assertGe(token.balanceOf(player), THRESHOLD);
         assertTrue(vault.isSolved(player));
     }
 
     function test_ExpiredSigReverts() public {
-        bytes memory sig = _signPermit(player, vault.AUTHORIZED_AMOUNT(), block.timestamp + 1 hours);
+        uint256 deadline = block.timestamp + 1 hours;
+        bytes memory sig = _signPermit(player, AMOUNT, deadline);
         vm.warp(block.timestamp + 2 hours);
         vm.prank(player);
-        vm.expectRevert(bytes("expired"));
-        vault.permit(vault.AUTHORIZED_AMOUNT(), block.timestamp - 1 hours, sig);
+        vm.expectRevert(abi.encodeWithSignature("Error(string)", "expired"));
+        vault.permit(AMOUNT, deadline, sig);
     }
 
     function test_WrongSpenderReverts() public {
-        // Sig was for `player`; another address can't redeem (msg.sender
-        // is part of the typed struct).
-        bytes memory sig = _signPermit(player, vault.AUTHORIZED_AMOUNT(), block.timestamp + 1 hours);
+        uint256 deadline = block.timestamp + 1 hours;
+        bytes memory sig = _signPermit(player, AMOUNT, deadline);
         address other = makeAddr("other");
         vm.prank(other);
-        vm.expectRevert(bytes("bad sig"));
-        vault.permit(vault.AUTHORIZED_AMOUNT(), block.timestamp + 1 hours, sig);
+        vm.expectRevert(abi.encodeWithSignature("Error(string)", "bad sig"));
+        vault.permit(AMOUNT, deadline, sig);
     }
 }

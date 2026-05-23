@@ -126,6 +126,7 @@ start_anvil() {
 
 deploy() {
   local dir="$1" tag="$2"; shift 2
+  bash "$REPO_ROOT/scripts/sync-lib.sh" >/dev/null
   if [[ ! -d "$dir/lib/forge-std" ]]; then
     # Pin forge-std to a version whose Vm cheat-code surface our tests
     # compile against. 1.10.x is the most recent without the

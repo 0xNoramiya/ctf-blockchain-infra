@@ -1,0 +1,23 @@
+{
+  "id": "sigreplay",
+  "title": "Replay Receipt",
+  "category": "smart-contract",
+  "description": "A vault releases tokens against a signed receipt from an authorized signer. The signer is glad to issue one to your address. Read the verifier carefully.",
+  "target": "$INSTALL_TARGET",
+  "info": [
+    { "label": "Win at", "value": "balance >= 1000 VLT" }
+  ],
+  "downloads": [
+    { "label": "Contracts (zip)", "url": "/dist/sigreplay/sigreplay.zip" }
+  ],
+  "signer": {
+    "enabled": true,
+    "label": "Get receipt",
+    "type": "personal-sign",
+    "template": [
+      { "type": "string",  "value": "Withdraw" },
+      { "type": "address", "value": "$player" },
+      { "type": "uint256", "value": "100000000000000000000" }
+    ]
+  }
+}

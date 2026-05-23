@@ -1,0 +1,75 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "ctf.fullname" . }}-backend
+  labels: {{- include "ctf.labels" . | nindent 4 }}
+spec:
+  replicas: {{ .Values.backend.replicaCount }}
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 0
+      maxSurge: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/component: backend
+      app.kubernetes.io/instance: {{ .Release.Name }}
+  template:
+    metadata:
+      labels: {{- include "ctf.labels" . | nindent 8 }}
+        app.kubernetes.io/component: backend
+    spec:
+      automountServiceAccountToken: false
+      securityContext: {{- toYaml .Values.podSecurityContext | nindent 8 }}
+      containers:
+        - name: backend
+          image: "{{ .Values.backend.image.repository }}:{{ .Values.backend.image.tag }}"
+          imagePullPolicy: {{ .Values.backend.image.pullPolicy }}
+          envFrom:
+            - secretRef:
+                name: {{ include "ctf.secretName" . }}
+          volumeMounts:
+            - name: challenges
+              mountPath: /etc/ctf
+              readOnly: true
+            {{- if .Values.backend.enableLauncher }}
+            - name: docker-sock
+              mountPath: /var/run/docker.sock
+            {{- end }}
+          ports:
+            - containerPort: 8787
+              name: http
+          readinessProbe:
+            httpGet: { path: /api/health, port: http }
+            periodSeconds: 10
+          livenessProbe:
+            httpGet: { path: /api/health, port: http }
+            periodSeconds: 30
+            failureThreshold: 3
+          resources: {{- toYaml .Values.backend.resources | nindent 12 }}
+          securityContext: {{- toYaml .Values.backendSecurityContext | nindent 12 }}
+      volumes:
+        - name: challenges
+          configMap:
+            name: {{ include "ctf.fullname" . }}-challenges
+        {{- if .Values.backend.enableLauncher }}
+        - name: docker-sock
+          hostPath:
+            path: /var/run/docker.sock
+            type: Socket
+        {{- end }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "ctf.fullname" . }}-backend
+  labels: {{- include "ctf.labels" . | nindent 4 }}
+spec:
+  type: {{ .Values.service.type }}
+  selector:
+    app.kubernetes.io/component: backend
+    app.kubernetes.io/instance: {{ .Release.Name }}
+  ports:
+    - port: 8787
+      targetPort: http
+      name: http

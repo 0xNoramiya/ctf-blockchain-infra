@@ -1,0 +1,8 @@
+{
+  "$schema": "https://0xnoramiya.github.io/ctf-blockchain-infra/schemas/smoke-recipe.json",
+  "spec": "ctf-smoke/v1",
+  "challengeId": "kothfk",
+  "fromInfo":   { "BANK": "Bank", "TOKEN": "Token" },
+  "extra":      { "BUMP_AMOUNT": "100" },
+  "fundTokens": { "Token": "200000000000000000000" }
+}

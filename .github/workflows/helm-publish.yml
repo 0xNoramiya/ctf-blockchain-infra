@@ -1,0 +1,69 @@
+name: Helm chart publish
+
+on:
+  push:
+    tags: ["v*"]
+    branches: [main]
+    paths:
+      - "deploy/helm/**"
+      - ".github/workflows/helm-publish.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  packages: write
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: azure/setup-helm@v4
+        with:
+          version: "3.16.2"
+
+      - name: Lint
+        run: helm lint deploy/helm/ctf-blockchain-infra --strict
+
+      - name: Resolve chart version
+        id: ver
+        run: |
+          # Tag pushes: use the tag (strip leading v). Branch pushes:
+          # use chart's appVersion + a -dev suffix derived from sha.
+          if [[ "$GITHUB_REF" == refs/tags/v* ]]; then
+            VERSION="${GITHUB_REF#refs/tags/v}"
+          else
+            BASE=$(grep '^version:' deploy/helm/ctf-blockchain-infra/Chart.yaml | awk '{print $2}')
+            VERSION="${BASE}-dev.${GITHUB_SHA::7}"
+          fi
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "chart version: $VERSION"
+
+      - name: Package
+        run: |
+          helm package deploy/helm/ctf-blockchain-infra \
+            --version "${{ steps.ver.outputs.version }}" \
+            --destination /tmp/chart
+
+      - name: Login to GHCR
+        run: |
+          echo "${{ secrets.GITHUB_TOKEN }}" | helm registry login ghcr.io \
+            --username "${{ github.actor }}" --password-stdin
+
+      - name: Push to OCI
+        run: |
+          helm push /tmp/chart/ctf-blockchain-infra-${{ steps.ver.outputs.version }}.tgz \
+            oci://ghcr.io/${{ github.repository_owner }}/charts
+
+      - name: Summary
+        run: |
+          echo "Published to: oci://ghcr.io/${{ github.repository_owner }}/charts/ctf-blockchain-infra:${{ steps.ver.outputs.version }}" \
+            >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "Install with:" >> "$GITHUB_STEP_SUMMARY"
+          echo '```' >> "$GITHUB_STEP_SUMMARY"
+          echo "helm install ctf oci://ghcr.io/${{ github.repository_owner }}/charts/ctf-blockchain-infra \\" >> "$GITHUB_STEP_SUMMARY"
+          echo "  --version ${{ steps.ver.outputs.version }} \\" >> "$GITHUB_STEP_SUMMARY"
+          echo "  --values my-values.yaml" >> "$GITHUB_STEP_SUMMARY"
+          echo '```' >> "$GITHUB_STEP_SUMMARY"

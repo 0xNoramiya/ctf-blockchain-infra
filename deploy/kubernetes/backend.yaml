@@ -1,0 +1,75 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: backend
+  namespace: ctf
+  labels:
+    app.kubernetes.io/name: ctf-backend
+spec:
+  replicas: 1
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 0
+      maxSurge: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: ctf-backend
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: ctf-backend
+    spec:
+      automountServiceAccountToken: false
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        fsGroup: 1000
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: backend
+          image: ghcr.io/example/ctf-backend:latest
+          imagePullPolicy: IfNotPresent
+          envFrom:
+            - secretRef:
+                name: ctf-backend-env
+          volumeMounts:
+            - name: challenges
+              mountPath: /etc/ctf
+              readOnly: true
+          ports:
+            - containerPort: 8787
+              name: http
+          readinessProbe:
+            httpGet: { path: /api/health, port: http }
+            periodSeconds: 10
+          livenessProbe:
+            httpGet: { path: /api/health, port: http }
+            periodSeconds: 30
+            failureThreshold: 3
+          resources:
+            requests: { cpu: 25m, memory: 64Mi }
+            limits:   { cpu: 500m, memory: 256Mi }
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities: { drop: ["ALL"] }
+      volumes:
+        - name: challenges
+          configMap:
+            name: ctf-challenges
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: backend
+  namespace: ctf
+spec:
+  type: ClusterIP
+  selector:
+    app.kubernetes.io/name: ctf-backend
+  ports:
+    - port: 8787
+      targetPort: http
+      name: http

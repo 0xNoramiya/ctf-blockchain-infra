@@ -1,0 +1,14 @@
+{
+  "../koth-frozen-king/lib/forge-std": {
+    "rev": "b3bc8b154382a75d0b0ef22d7fd4a0a5f0feee0e"
+  },
+  "../signature-replay/lib/forge-std": {
+    "rev": "620536fa5277db4e3fd46772d5cbc1ea0696fb43"
+  },
+  "lib/forge-std": {
+    "tag": {
+      "name": "v1.10.0",
+      "rev": "8bbcf6e3f8f62f419e5429a0bd89331c85c37824"
+    }
+  }
+}

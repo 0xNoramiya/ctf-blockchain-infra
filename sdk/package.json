@@ -1,0 +1,24 @@
+{
+  "name": "@ctf-blockchain-infra/sdk",
+  "version": "0.1.0",
+  "description": "Player-side solver SDK for ctf-blockchain-infra: wraps /api/{config,status,flag,sign,launch,kill,reset,instance,writeup,scoreboard}",
+  "type": "module",
+  "main": "index.js",
+  "exports": {
+    ".": "./index.js"
+  },
+  "files": [
+    "index.js",
+    "README.md"
+  ],
+  "license": "MIT",
+  "engines": {
+    "node": ">=18"
+  },
+  "peerDependencies": {
+    "ethers": "^6"
+  },
+  "peerDependenciesMeta": {
+    "ethers": { "optional": true }
+  }
+}

@@ -1,0 +1,40 @@
+# Challenge-pack metadata. A pack is a portable bundle that captures
+# everything an organizer needs to add ONE challenge to a deployment:
+# the manifest entry, any player-facing downloads, and (optionally) the
+# image build context.
+#
+# Layout:
+#   pack.yaml          — this file
+#   manifest.json      — the challenges.json entry (target/image filled
+#                        in by `ctf-admin install-pack` if you pass
+#                        --target or --image)
+#   dist/              — files that get copied into frontend/dist/<id>/
+#   README.md          — optional, included in the player-facing zip if
+#                        you choose to bundle it
+#   image/             — optional, build context for the private-anvil
+#                        image (Dockerfile + Solidity + entrypoint.sh)
+
+spec: ctf-pack/v1
+id: sigreplay
+title: Replay Receipt
+category: smart-contract
+mode: shared
+
+# Each pack must declare which schema fields are filled at install time.
+# Allowed: "target", "image", "fork.url", "fork.blockNumber".
+install:
+  resolveFields:
+    - target
+
+# Optional. When set, `ctf-admin install-pack` will verify the named
+# env vars are present in the target .env before declaring success.
+requires:
+  env:
+    - FLAG_SIGREPLAY
+    - SIGNER_KEY_SIGREPLAY
+
+# Optional human-readable note shown after `ctf-admin install-pack`.
+notes: |
+  Two env vars required (FLAG_SIGREPLAY and SIGNER_KEY_SIGREPLAY). The
+  deploy script in examples/signature-replay/ produces the contract
+  addresses; pass --target=0x... to fill the manifest in.

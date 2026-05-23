@@ -1,0 +1,6 @@
+{
+  "$schema": "https://0xnoramiya.github.io/ctf-blockchain-infra/schemas/smoke-recipe.json",
+  "spec": "ctf-smoke/v1",
+  "challengeId": "vaultinf",
+  "fromInfo": { "FACTORY": "Factory" }
+}

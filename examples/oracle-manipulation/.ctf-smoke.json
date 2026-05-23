@@ -1,0 +1,7 @@
+{
+  "$schema": "https://0xnoramiya.github.io/ctf-blockchain-infra/schemas/smoke-recipe.json",
+  "spec": "ctf-smoke/v1",
+  "challengeId": "oracle",
+  "fromInfo": {},
+  "comment": "private-anvil: contract addresses are surfaced via instance.extra at spawn time; solver reads them itself"
+}

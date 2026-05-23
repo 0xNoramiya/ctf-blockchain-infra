@@ -1,0 +1,123 @@
+## Default values. Override per release with `--values`, `--set`, or
+## by creating an overlay chart with `dependencies:`.
+
+nameOverride: ""
+fullnameOverride: ""
+
+backend:
+  image:
+    repository: ghcr.io/example/ctf-backend
+    tag: latest
+    pullPolicy: IfNotPresent
+  replicaCount: 1
+  resources:
+    requests:
+      cpu: 25m
+      memory: 64Mi
+    limits:
+      cpu: 500m
+      memory: 256Mi
+  # Set to true ONLY if you have private-anvil challenges. Grants the
+  # pod docker.sock access — equivalent to root on the node.
+  enableLauncher: false
+
+frontend:
+  image:
+    repository: ghcr.io/example/ctf-frontend
+    tag: latest
+    pullPolicy: IfNotPresent
+  replicaCount: 2
+  resources:
+    requests:
+      cpu: 10m
+      memory: 32Mi
+    limits:
+      cpu: 200m
+      memory: 128Mi
+
+## Manifest content. Lives in a ConfigMap; the backend mounts it at
+## /etc/ctf/challenges.json. Override entirely to ship your own.
+challenges:
+  site:
+    title: "Smart Contract CTF"
+    subtitle: "On-chain challenges. Solve them, claim flags."
+    footer: "your-org"
+  entries: []
+    # - id: ch01
+    #   title: "Replay Receipt"
+    #   description: "..."
+    #   target: "0x..."
+    #   signer:
+    #     enabled: true
+    #     template:
+    #       - { type: string,  value: Withdraw }
+    #       - { type: address, value: $player }
+    #       - { type: uint256, value: "100000000000000000000" }
+
+## Backend env. Most should come from the Secret below; non-sensitive
+## switches can stay in values.
+env:
+  RPC_URL: "https://ethereum-sepolia-rpc.publicnode.com"
+  CHAIN_ID: "11155111"
+  HOST: "0.0.0.0"
+  PORT: "8787"
+  CORS_ORIGIN: "*"
+  CHALLENGES_MANIFEST: "/etc/ctf/challenges.json"
+  INSTANCE_RPC_MODE: "proxy"
+  PUBLIC_BASE_URL: ""
+
+## Secrets — kubectl create + reference, OR set existingSecret to a name
+## you manage out-of-band (sealed-secrets, external-secrets, ...).
+secrets:
+  existingSecret: ""
+  ## Inline values, materialized into a Secret named <release>-env.
+  ## NEVER commit real values to a chart; use --set or a values file
+  ## kept out of git.
+  values:
+    FLAG_CH01: "CTF{replace_me}"
+    # SIGNER_KEY_CH01: "0x..."
+    # ADMIN_TOKEN: ""
+    # WEBHOOK_URL: ""
+    # WEBHOOK_SECRET: ""
+
+ingress:
+  enabled: true
+  className: nginx
+  host: ctf.example.com
+  tls:
+    enabled: true
+    secretName: ctf-tls
+  annotations:
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "60"
+    nginx.ingress.kubernetes.io/proxy-connect-timeout: "5"
+    nginx.ingress.kubernetes.io/proxy-body-size: "512k"
+
+service:
+  type: ClusterIP
+
+## NetworkPolicy resources. Skip if your cluster's CNI doesn't enforce
+## them (kindnet, flannel-no-policy) — they'd be silently no-op.
+networkPolicy:
+  enabled: false
+  ingressNamespace: ingress-nginx
+  monitoringNamespace: ""        # e.g. "monitoring" — enables Prometheus scrape ingress
+
+podSecurityContext:
+  runAsNonRoot: true
+  fsGroup: 1000
+  seccompProfile:
+    type: RuntimeDefault
+
+backendSecurityContext:
+  runAsUser: 1000
+  allowPrivilegeEscalation: false
+  readOnlyRootFilesystem: true
+  capabilities:
+    drop: [ALL]
+
+frontendSecurityContext:
+  runAsUser: 101
+  allowPrivilegeEscalation: false
+  readOnlyRootFilesystem: false
+  capabilities:
+    drop: [ALL]

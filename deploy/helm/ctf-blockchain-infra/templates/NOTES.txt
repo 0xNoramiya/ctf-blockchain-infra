@@ -1,0 +1,32 @@
+
+ctf-blockchain-infra installed.
+
+Next steps:
+
+  1. Verify pods are running:
+     kubectl -n {{ .Release.Namespace }} get pods -l app.kubernetes.io/instance={{ .Release.Name }}
+
+  2. Tail backend logs to confirm the manifest loaded cleanly:
+     kubectl -n {{ .Release.Namespace }} logs -l app.kubernetes.io/component=backend -f
+
+  3. Edit your manifest by updating values.yaml `challenges.entries`, then:
+     helm upgrade {{ .Release.Name }} ./deploy/helm/ctf-blockchain-infra \
+       --reuse-values --set-file challenges.entries=challenges.yaml
+
+  4. Hot-reload without a rollout via the admin endpoint:
+     kubectl -n {{ .Release.Namespace }} port-forward svc/{{ include "ctf.fullname" . }}-backend 8787 &
+     curl -sX POST http://127.0.0.1:8787/api/admin/manifest/reload \
+       -H "Authorization: Bearer $ADMIN_TOKEN"
+
+{{- if .Values.ingress.enabled }}
+
+  5. Once DNS resolves for {{ .Values.ingress.host }}, smoke-test:
+     curl -s https://{{ .Values.ingress.host }}/api/health
+{{- end }}
+{{- if not .Values.backend.enableLauncher }}
+
+  Private-anvil mode is disabled (`backend.enableLauncher=false`). To
+  enable it, redeploy with `--set backend.enableLauncher=true` — that
+  mounts /var/run/docker.sock, which grants root-equivalent access on
+  the node. Make sure that's the threat model you want.
+{{- end }}

@@ -1,0 +1,14 @@
+{
+  "id": "vaultinf",
+  "title": "First Slice",
+  "category": "smart-contract",
+  "description": "A vault just opened. Its first depositor — a naive contract holding 1000 USDC — deposits only when you tell it to. You bring 2000 USDC of your own. The vault's share-pricing formula is ERC4626 at its most literal.",
+  "target": "0xPASTE_DEPLOYED_FACTORY_ADDRESS",
+  "info": [
+    { "label": "Factory", "value": "0xPASTE_DEPLOYED_FACTORY_ADDRESS", "kind": "address" },
+    { "label": "Win at", "value": "balance >= 2500 USDC AND depositor triggered" }
+  ],
+  "downloads": [
+    { "label": "Contracts (zip)", "url": "/dist/vaultinf.zip" }
+  ]
+}

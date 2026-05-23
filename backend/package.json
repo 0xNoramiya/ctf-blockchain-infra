@@ -1,0 +1,23 @@
+{
+  "name": "ctf-blockchain-infra-backend",
+  "version": "1.0.0",
+  "type": "module",
+  "description": "Flag-gating backend for the ctf-blockchain-infra template. Loads a challenges manifest, verifies on-chain isSolved(player), and releases flags from env.",
+  "license": "MIT",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "test": "node --test --test-reporter=spec test/*.test.js"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "dependencies": {
+    "cors": "^2.8.5",
+    "dockerode": "^4.0.2",
+    "dotenv": "^16.4.5",
+    "ethers": "^6.13.4",
+    "express": "^4.21.1",
+    "express-rate-limit": "^7.4.1"
+  }
+}

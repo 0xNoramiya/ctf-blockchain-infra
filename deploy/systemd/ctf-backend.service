@@ -1,0 +1,36 @@
+[Unit]
+Description=CTF backend (challenges manifest + flag gating)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=ctf
+Group=ctf
+WorkingDirectory=/opt/ctf/backend
+EnvironmentFile=/opt/ctf/backend/.env
+ExecStart=/usr/bin/node /opt/ctf/backend/server.js
+Restart=on-failure
+RestartSec=3
+StandardOutput=journal
+StandardError=journal
+
+# hardening
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/opt/ctf/backend
+ProtectKernelTunables=true
+ProtectKernelModules=true
+ProtectControlGroups=true
+RestrictNamespaces=true
+RestrictSUIDSGID=true
+LockPersonality=true
+MemoryDenyWriteExecute=true
+SystemCallArchitectures=native
+SystemCallFilter=@system-service
+SystemCallFilter=~@privileged @resources
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,108 @@
+site_name: ctf-blockchain-infra
+site_description: Open-source infra for hosting on-chain CTF challenges. Drop in your Solidity, deploy to a public testnet, gate flags with on-chain isSolved().
+site_url: https://0xnoramiya.github.io/ctf-blockchain-infra/
+repo_url: https://github.com/0xNoramiya/ctf-blockchain-infra
+repo_name: 0xNoramiya/ctf-blockchain-infra
+edit_uri: edit/main/docs/docs/
+
+theme:
+  name: material
+  language: en
+  palette:
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      primary: indigo
+      accent: indigo
+      toggle:
+        icon: material/weather-night
+        name: Switch to dark mode
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      primary: indigo
+      accent: indigo
+      toggle:
+        icon: material/weather-sunny
+        name: Switch to light mode
+  features:
+    - navigation.tabs
+    - navigation.sections
+    - navigation.indexes
+    - navigation.top
+    - navigation.footer
+    - search.suggest
+    - search.highlight
+    - content.code.copy
+    - content.code.annotate
+    - content.tabs.link
+    - toc.follow
+  font:
+    text: Inter
+    code: JetBrains Mono
+  icon:
+    repo: fontawesome/brands/github
+
+markdown_extensions:
+  - admonition
+  - attr_list
+  - def_list
+  - footnotes
+  - md_in_html
+  - tables
+  - toc:
+      permalink: true
+  - pymdownx.details
+  - pymdownx.highlight:
+      anchor_linenums: true
+  - pymdownx.inlinehilite
+  - pymdownx.snippets
+  - pymdownx.superfences:
+      custom_fences:
+        - name: mermaid
+          class: mermaid
+          format: !!python/name:pymdownx.superfences.fence_code_format
+  - pymdownx.tabbed:
+      alternate_style: true
+  - pymdownx.tasklist:
+      custom_checkbox: true
+
+plugins:
+  - search
+
+extra:
+  generator: false
+  social:
+    - icon: fontawesome/brands/github
+      link: https://github.com/0xNoramiya/ctf-blockchain-infra
+
+nav:
+  - Home: index.md
+  - Getting started: getting-started.md
+  - Architecture: architecture.md
+  - Deployment: deployment.md
+  - Challenges:
+      - challenges/overview.md
+      - Single-instance: challenges/single-instance.md
+      - Per-player factory: challenges/per-player.md
+      - Private anvil: challenges/private-anvil.md
+      - KOTH: challenges/koth.md
+  - Worked examples: examples.md
+  - Challenge packs: packs.md
+  - Solver SDK: sdk.md
+  - Smoke recipes: smoke-recipes.md
+  - API reference: api.md
+  - Operations:
+      - operations/docker.md
+      - operations/kubernetes.md
+      - operations/launcher.md
+      - operations/webhook.md
+      - operations/admin.md
+      - operations/cli.md
+      - operations/chains.md
+      - operations/onboarding.md
+      - operations/writeups.md
+      - operations/scoreboard.md
+      - operations/metrics.md
+      - operations/cloudflare.md
+      - operations/systemd.md
+      - operations/secrets.md
+  - FAQ: faq.md

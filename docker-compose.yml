@@ -1,0 +1,71 @@
+# One-command deploy. Mount your edited manifest + .env from the host so
+# updates are zero-rebuild: `docker compose up -d` once, then
+# `docker compose restart backend` after editing.
+#
+# Bring up:
+#   cp backend/.env.example backend/.env && edit
+#   cp backend/challenges.example.json backend/challenges.json && edit
+#   docker compose up -d --build
+#   docker compose logs -f
+#
+# Tear down:
+#   docker compose down
+
+name: ctf-blockchain-infra
+
+services:
+  backend:
+    build:
+      context: ./backend
+    image: ctf-backend:local
+    restart: unless-stopped
+    env_file:
+      - ./backend/.env
+    volumes:
+      - ./backend/challenges.json:/app/challenges.json:ro
+      # Required ONLY if you have private-anvil challenges. The backend
+      # needs Docker socket access to spawn per-player containers. Remove
+      # this mount on shared-only deployments — it grants root-equivalent
+      # power on the host.
+      - /var/run/docker.sock:/var/run/docker.sock
+      # Persisted launcher state so restarts don't orphan running
+      # instances. The file is JSON; the volume is intentionally small.
+      - ctf-instance-state:/var/lib/ctf
+    environment:
+      INSTANCE_STATE_PATH: /var/lib/ctf/instances.json
+      WRITEUPS_PATH: /var/lib/ctf/writeups.jsonl
+    expose:
+      - "8787"
+    networks: [internal]
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://127.0.0.1:8787/api/health"]
+      interval: 30s
+      timeout: 3s
+      retries: 3
+      start_period: 5s
+
+  frontend:
+    build:
+      context: ./frontend
+    image: ctf-frontend:local
+    restart: unless-stopped
+    depends_on:
+      backend:
+        condition: service_healthy
+    ports:
+      - "${PUBLIC_PORT:-8080}:8080"
+    volumes:
+      - ./frontend/dist:/usr/share/nginx/html/dist:ro
+    networks: [internal]
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://127.0.0.1:8080/healthz"]
+      interval: 30s
+      timeout: 3s
+      retries: 3
+
+networks:
+  internal:
+    driver: bridge
+
+volumes:
+  ctf-instance-state:

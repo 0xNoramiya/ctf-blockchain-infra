@@ -1,0 +1,47 @@
+# Install: pip install pre-commit && pre-commit install
+# Run on demand: pre-commit run --all-files
+
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v5.0.0
+    hooks:
+      - id: trailing-whitespace
+        exclude: ^(.*\.md|.*\.svg)$
+      - id: end-of-file-fixer
+      - id: check-yaml
+        args: [--allow-multiple-documents]
+        exclude: ^(docs/mkdocs\.yml|deploy/helm/.*)$  # mkdocs uses !!python/name; helm uses {{ }}
+      - id: check-json
+      - id: check-added-large-files
+        args: [--maxkb=512]
+      - id: check-merge-conflict
+      - id: mixed-line-ending
+        args: [--fix=lf]
+
+  - repo: local
+    hooks:
+      - id: node-check
+        name: node --check on JS sources
+        entry: bash -c 'for f in "$@"; do node --check "$f" || exit 1; done' --
+        language: system
+        files: '\.(js|mjs)$'
+        exclude: '/(node_modules|out|cache)/'
+
+      - id: forge-fmt
+        name: forge fmt --check (Solidity)
+        entry: bash -c 'set -e; for f in "$@"; do dir=$(dirname "$f"); while [ "$dir" != "." ] && [ ! -f "$dir/foundry.toml" ]; do dir=$(dirname "$dir"); done; [ -f "$dir/foundry.toml" ] && (cd "$dir" && forge fmt --check) || true; done' --
+        language: system
+        files: '\.sol$'
+        pass_filenames: true
+
+      - id: openapi-yaml
+        name: openapi.yaml validates
+        entry: python3 -c 'import sys, yaml; [yaml.safe_load(open(f)) for f in sys.argv[1:]]'
+        language: system
+        files: '^backend/openapi\.yaml$'
+
+      - id: challenges-json
+        name: challenges.example.json is valid JSON
+        entry: python3 -c 'import sys, json; [json.load(open(f)) for f in sys.argv[1:]]'
+        language: system
+        files: '^backend/challenges\.example\.json$|/manifest\.json$|/challenges-entry\.json$'

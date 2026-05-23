@@ -1,0 +1,111 @@
+# Default-deny posture for the ctf namespace.
+#
+# - All pod-to-pod and pod-to-internet traffic is denied unless an
+#   explicit allow rule below permits it.
+# - Frontend accepts ingress from the cluster's ingress-controller
+#   namespace.
+# - Backend accepts ingress only from the frontend pod.
+# - Backend egress is allowed to DNS, HTTPS (RPC + webhook), and the
+#   cluster's CoreDNS service.
+# - Frontend egress is allowed only to the backend.
+#
+# Adjust `ingressNamespace` if you don't use the conventional
+# `ingress-nginx` namespace.
+
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: deny-by-default
+  namespace: ctf
+spec:
+  podSelector: {}
+  policyTypes:
+    - Ingress
+    - Egress
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-dns
+  namespace: ctf
+spec:
+  podSelector: {}
+  policyTypes: [Egress]
+  egress:
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: kube-system
+      ports:
+        - { protocol: UDP, port: 53 }
+        - { protocol: TCP, port: 53 }
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: frontend-ingress
+  namespace: ctf
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/name: ctf-frontend
+  policyTypes: [Ingress]
+  ingress:
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: ingress-nginx
+      ports:
+        - { protocol: TCP, port: 8080 }
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: backend-ingress
+  namespace: ctf
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/name: ctf-backend
+  policyTypes: [Ingress]
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/name: ctf-frontend
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: ingress-nginx
+        # Prometheus scrape — uncomment if your monitoring stack is in
+        # another namespace.
+        # - namespaceSelector:
+        #     matchLabels:
+        #       kubernetes.io/metadata.name: monitoring
+      ports:
+        - { protocol: TCP, port: 8787 }
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: backend-egress
+  namespace: ctf
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/name: ctf-backend
+  policyTypes: [Egress]
+  egress:
+    # HTTPS — RPC endpoints + webhook receivers.
+    - to:
+        - ipBlock:
+            cidr: 0.0.0.0/0
+            except:
+              - 10.0.0.0/8
+              - 172.16.0.0/12
+              - 192.168.0.0/16
+              - 169.254.0.0/16
+      ports:
+        - { protocol: TCP, port: 443 }
+        - { protocol: TCP, port: 80 }
+    # Docker socket isn't network traffic; it's a hostPath mount.
+    # If you switch to a Docker-API-over-TCP setup, allow that port here.

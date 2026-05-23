@@ -1,0 +1,45 @@
+name: Helm chart
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "deploy/helm/**"
+      - ".github/workflows/helm.yml"
+  pull_request:
+    paths:
+      - "deploy/helm/**"
+      - ".github/workflows/helm.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: azure/setup-helm@v4
+        with:
+          version: "3.16.2"
+
+      - name: helm lint
+        run: helm lint deploy/helm/ctf-blockchain-infra --strict
+
+      - name: helm template (smoke test)
+        run: |
+          helm template ctf deploy/helm/ctf-blockchain-infra \
+            --set backend.image.repository=test/backend \
+            --set frontend.image.repository=test/frontend \
+            --set ingress.host=ctf.test.local \
+          > /tmp/rendered.yaml
+          wc -l /tmp/rendered.yaml
+
+      - name: kubectl client-side dry-run
+        run: |
+          curl -fsSLo /usr/local/bin/kubectl \
+            "https://dl.k8s.io/release/$(curl -fsSL https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
+          chmod +x /usr/local/bin/kubectl
+          kubectl --dry-run=client apply -f /tmp/rendered.yaml

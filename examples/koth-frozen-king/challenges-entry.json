@@ -1,0 +1,16 @@
+{
+  "id": "kothfk",
+  "title": "Frozen King",
+  "category": "smart-contract",
+  "description": "A bank tracks deposit scores; the highest depositor is king. The throne is yours as long as no one outbids you. A subtle bug in withdraw() decides who outbids whom.",
+  "target": "0xPASTE_DEPLOYED_BANK",
+  "info": [
+    { "label": "Bank",   "value": "0xPASTE_DEPLOYED_BANK",  "kind": "address" },
+    { "label": "Token",  "value": "0xPASTE_DEPLOYED_TOKEN", "kind": "erc20", "symbol": "KOTH", "decimals": 18 },
+    { "label": "Type",   "value": "King-of-the-hill (highest balance)" },
+    { "label": "Win at", "value": "be the current king" }
+  ],
+  "downloads": [
+    { "label": "Contracts (zip)", "url": "/dist/kothfk.zip" }
+  ]
+}

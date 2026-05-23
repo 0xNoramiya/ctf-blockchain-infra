@@ -1,0 +1,139 @@
+name: Release
+
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Tag to release (must already exist)"
+        required: true
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Resolve tag
+        id: tag
+        run: |
+          TAG="${{ inputs.tag || github.ref_name }}"
+          echo "tag=$TAG" >> "$GITHUB_OUTPUT"
+          VERSION="${TAG#v}"
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+
+      - name: Find previous tag
+        id: prev
+        run: |
+          PREV=$(git tag --sort=-creatordate | grep '^v' | grep -v "^${{ steps.tag.outputs.tag }}$" | head -1)
+          echo "prev=$PREV" >> "$GITHUB_OUTPUT"
+          echo "previous tag: ${PREV:-<none>}"
+
+      - name: Build changelog
+        id: log
+        run: |
+          {
+            if [[ -n "${{ steps.prev.outputs.prev }}" ]]; then
+              RANGE="${{ steps.prev.outputs.prev }}..${{ steps.tag.outputs.tag }}"
+            else
+              RANGE="${{ steps.tag.outputs.tag }}"
+            fi
+            echo "RANGE=$RANGE"
+            git log --pretty=format:'%h|%s' "$RANGE" --no-merges > /tmp/log.txt
+
+            for sec in "feat" "fix" "perf" "refactor" "docs" "ci" "test" "chore"; do
+              MATCHES=$(grep -E "^[0-9a-f]+\\|${sec}[(:]" /tmp/log.txt || true)
+              [[ -z "$MATCHES" ]] && continue
+              case "$sec" in
+                feat)     LABEL="### ✨ Features" ;;
+                fix)      LABEL="### 🐛 Fixes" ;;
+                perf)     LABEL="### ⚡ Performance" ;;
+                refactor) LABEL="### ♻️  Refactors" ;;
+                docs)     LABEL="### 📚 Documentation" ;;
+                ci)       LABEL="### 🔧 CI" ;;
+                test)     LABEL="### ✅ Tests" ;;
+                chore)    LABEL="### 🧹 Chores" ;;
+              esac
+              echo "$LABEL"
+              while IFS='|' read -r sha subject; do
+                echo "- ${subject#$sec*: } ([$sha](https://github.com/${{ github.repository }}/commit/$sha))"
+              done <<<"$MATCHES"
+              echo
+            done
+
+            OTHER=$(grep -Ev "^[0-9a-f]+\\|(feat|fix|perf|refactor|docs|ci|test|chore)[(:]" /tmp/log.txt || true)
+            if [[ -n "$OTHER" ]]; then
+              echo "### Other"
+              while IFS='|' read -r sha subject; do
+                [[ -z "$sha" ]] && continue
+                echo "- $subject ([$sha](https://github.com/${{ github.repository }}/commit/$sha))"
+              done <<<"$OTHER"
+              echo
+            fi
+          } > /tmp/changelog.md
+
+          {
+            echo 'changelog<<EOF'
+            cat /tmp/changelog.md
+            echo 'EOF'
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Assemble release body
+        run: |
+          REPO="${{ github.repository }}"
+          OWNER="${{ github.repository_owner }}"
+          VER="${{ steps.tag.outputs.version }}"
+          cat > /tmp/body.md <<EOF
+          ## Install
+
+          **Docker Compose**
+          \`\`\`bash
+          git clone https://github.com/$REPO.git
+          cd ctf-blockchain-infra && git checkout ${{ steps.tag.outputs.tag }}
+          cp backend/.env.example backend/.env
+          cp backend/challenges.example.json backend/challenges.json
+          docker compose up -d --build
+          \`\`\`
+
+          **Helm (OCI)**
+          \`\`\`bash
+          helm install ctf oci://ghcr.io/$OWNER/charts/ctf-blockchain-infra \\
+            --version $VER \\
+            --create-namespace -n ctf \\
+            --values my-values.yaml
+          \`\`\`
+
+          **Pre-built images**
+          - \`ghcr.io/$OWNER/ctf-backend:$VER\`
+          - \`ghcr.io/$OWNER/ctf-frontend:$VER\`
+
+          Full docs: https://$OWNER.github.io/ctf-blockchain-infra/
+
+          ## Changes
+
+          ${{ steps.log.outputs.changelog }}
+          EOF
+          cat /tmp/body.md
+
+      - name: Build distributable contracts zips
+        run: python3 scripts/build-dist.py
+
+      - name: Create / update GitHub Release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          if gh release view "${{ steps.tag.outputs.tag }}" >/dev/null 2>&1; then
+            gh release edit "${{ steps.tag.outputs.tag }}" --notes-file /tmp/body.md
+            gh release upload "${{ steps.tag.outputs.tag }}" dist/*.zip --clobber
+          else
+            gh release create "${{ steps.tag.outputs.tag }}" \
+              --title "${{ steps.tag.outputs.tag }}" \
+              --notes-file /tmp/body.md \
+              dist/*.zip
+          fi

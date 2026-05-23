@@ -1,0 +1,25 @@
+# `kubectl apply -k deploy/kubernetes/` brings up the whole stack.
+# Override images, host, and replicas in your own overlay rather than
+# editing these base manifests.
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: ctf
+
+resources:
+  - namespace.yaml
+  - configmap.yaml
+  - secret.example.yaml
+  - backend.yaml
+  - frontend.yaml
+  - ingress.yaml
+  - networkpolicy.yaml
+
+images:
+  - name: ghcr.io/example/ctf-backend
+    newTag: latest
+  - name: ghcr.io/example/ctf-frontend
+    newTag: latest
+
+commonLabels:
+  app.kubernetes.io/part-of: ctf-blockchain-infra

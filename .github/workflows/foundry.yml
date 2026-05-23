@@ -1,0 +1,66 @@
+name: Contracts
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "contracts-template/**"
+      - "examples/**/*.sol"
+      - "examples/**/foundry.toml"
+      - ".github/workflows/foundry.yml"
+  pull_request:
+    paths:
+      - "contracts-template/**"
+      - "examples/**/*.sol"
+      - "examples/**/foundry.toml"
+      - ".github/workflows/foundry.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - dir: contracts-template/single-instance
+          - dir: contracts-template/per-player
+          - dir: contracts-template/private-anvil
+          - dir: contracts-template/koth
+          - dir: examples/signature-replay
+          - dir: examples/vault-inflation
+          - dir: examples/koth-frozen-king
+          - dir: examples/eip712-replay
+          - dir: examples/oracle-manipulation
+    defaults:
+      run:
+        working-directory: ${{ matrix.dir }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: foundry-rs/foundry-toolchain@v1
+        with:
+          version: stable
+
+      - name: Install forge-std
+        run: forge install foundry-rs/forge-std
+
+      - name: forge build
+        run: forge build --sizes
+
+      - name: forge test (if tests exist)
+        run: |
+          if compgen -G "test/*.t.sol" > /dev/null || compgen -G "tests/*.t.sol" > /dev/null; then
+            forge test -vvv
+          else
+            echo "no tests in this template; skipping"
+          fi
+
+      - name: forge fmt --check
+        run: |
+          DIRS="src script"
+          [ -d test ] && DIRS="$DIRS test"
+          forge fmt --check $DIRS

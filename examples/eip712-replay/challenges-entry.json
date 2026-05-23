@@ -1,0 +1,47 @@
+{
+  "id": "eip712replay",
+  "title": "Permit, but Once",
+  "category": "smart-contract",
+  "description": "A vault releases tokens against an EIP-712 typed-data Permit signed by a trusted issuer. The Permit type is the standard ERC-2612 shape — almost.",
+  "target": "0xPASTE_DEPLOYED_VAULT",
+  "info": [
+    { "label": "Vault", "value": "0xPASTE_DEPLOYED_VAULT", "kind": "address" },
+    { "label": "Token", "value": "0xPASTE_DEPLOYED_TOKEN", "kind": "erc20", "symbol": "PT", "decimals": 18 },
+    { "label": "Win at", "value": "balance >= 1000 PT" }
+  ],
+  "downloads": [
+    { "label": "Contracts (zip)", "url": "/dist/eip712replay/eip712replay.zip" }
+  ],
+  "signer": {
+    "enabled": true,
+    "label": "Get permit",
+    "type": "eip712",
+    "typedData": {
+      "domain": {
+        "name": "PermitVault",
+        "version": "1",
+        "chainId": "$chainId",
+        "verifyingContract": "0xPASTE_DEPLOYED_VAULT"
+      },
+      "primaryType": "Permit",
+      "types": {
+        "EIP712Domain": [
+          {"name": "name",              "type": "string"},
+          {"name": "version",           "type": "string"},
+          {"name": "chainId",           "type": "uint256"},
+          {"name": "verifyingContract", "type": "address"}
+        ],
+        "Permit": [
+          {"name": "spender",  "type": "address"},
+          {"name": "amount",   "type": "uint256"},
+          {"name": "deadline", "type": "uint256"}
+        ]
+      },
+      "message": {
+        "spender":  "$player",
+        "amount":   "100000000000000000000",
+        "deadline": "9999999999"
+      }
+    }
+  }
+}

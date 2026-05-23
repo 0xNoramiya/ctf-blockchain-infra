@@ -1,0 +1,90 @@
+{
+  "1": {
+    "chainName": "Ethereum",
+    "nativeSymbol": "ETH",
+    "blockExplorer": "https://etherscan.io",
+    "faucets": []
+  },
+  "10": {
+    "chainName": "Optimism",
+    "nativeSymbol": "ETH",
+    "blockExplorer": "https://optimistic.etherscan.io",
+    "faucets": []
+  },
+  "8453": {
+    "chainName": "Base",
+    "nativeSymbol": "ETH",
+    "blockExplorer": "https://basescan.org",
+    "faucets": []
+  },
+  "42161": {
+    "chainName": "Arbitrum One",
+    "nativeSymbol": "ETH",
+    "blockExplorer": "https://arbiscan.io",
+    "faucets": []
+  },
+  "137": {
+    "chainName": "Polygon",
+    "nativeSymbol": "POL",
+    "blockExplorer": "https://polygonscan.com",
+    "faucets": []
+  },
+  "11155111": {
+    "chainName": "Sepolia",
+    "nativeSymbol": "ETH",
+    "blockExplorer": "https://sepolia.etherscan.io",
+    "faucets": [
+      { "label": "PublicNode", "url": "https://faucet.publicnode.com/ethereum-sepolia" },
+      { "label": "Alchemy",    "url": "https://www.alchemy.com/faucets/ethereum-sepolia" },
+      { "label": "Google Cloud","url": "https://cloud.google.com/application/web3/faucet/ethereum/sepolia" }
+    ]
+  },
+  "17000": {
+    "chainName": "Holesky",
+    "nativeSymbol": "ETH",
+    "blockExplorer": "https://holesky.etherscan.io",
+    "faucets": [
+      { "label": "PublicNode", "url": "https://faucet.publicnode.com/ethereum-holesky" },
+      { "label": "QuickNode",  "url": "https://faucet.quicknode.com/ethereum/holesky" }
+    ]
+  },
+  "84532": {
+    "chainName": "Base Sepolia",
+    "nativeSymbol": "ETH",
+    "blockExplorer": "https://sepolia.basescan.org",
+    "faucets": [
+      { "label": "Base (Coinbase)", "url": "https://www.coinbase.com/faucets/base-ethereum-sepolia-faucet" },
+      { "label": "QuickNode",       "url": "https://faucet.quicknode.com/base/sepolia" }
+    ]
+  },
+  "11155420": {
+    "chainName": "Optimism Sepolia",
+    "nativeSymbol": "ETH",
+    "blockExplorer": "https://sepolia-optimism.etherscan.io",
+    "faucets": [
+      { "label": "Superchain", "url": "https://app.optimism.io/faucet" }
+    ]
+  },
+  "421614": {
+    "chainName": "Arbitrum Sepolia",
+    "nativeSymbol": "ETH",
+    "blockExplorer": "https://sepolia.arbiscan.io",
+    "faucets": [
+      { "label": "Arbitrum", "url": "https://www.alchemy.com/faucets/arbitrum-sepolia" }
+    ]
+  },
+  "80002": {
+    "chainName": "Polygon Amoy",
+    "nativeSymbol": "POL",
+    "blockExplorer": "https://amoy.polygonscan.com",
+    "faucets": [
+      { "label": "Polygon", "url": "https://faucet.polygon.technology/" }
+    ]
+  },
+  "31337": {
+    "chainName": "Anvil (local)",
+    "nativeSymbol": "ETH",
+    "blockExplorer": "",
+    "faucets": []
+  }
+}

@@ -1,0 +1,109 @@
+{
+  "site": {
+    "title": "Smart Contract CTF",
+    "subtitle": "On-chain challenges. Solve them, claim flags.",
+    "footer": "your-org · 2026",
+    "lowBalanceThresholdEth": "0.005"
+  },
+  "challenges": [
+    {
+      "id": "ch01",
+      "title": "Signature Replay",
+      "category": "smart-contract",
+      "description": "A vault releases tokens against an off-chain signature from an authorized signer. The signer is happy to issue a receipt to your address. Read the verifier carefully — they may have skipped something every signed message needs.",
+      "target": "0x0000000000000000000000000000000000000000",
+      "isSolvedFn": "isSolved",
+      "info": [
+        { "label": "Pool",      "value": "0x0000000000000000000000000000000000000000", "kind": "address" },
+        { "label": "Token",     "value": "0x0000000000000000000000000000000000000000", "kind": "erc20", "symbol": "VLT", "decimals": 18 },
+        { "label": "Win at",    "value": "balance >= 1000 tokens" }
+      ],
+      "downloads": [
+        { "label": "Contracts (zip)", "url": "/dist/ch01.zip" }
+      ],
+      "signer": {
+        "enabled": true,
+        "label": "GET RECEIPT",
+        "template": [
+          { "type": "string",  "value": "Withdraw" },
+          { "type": "address", "value": "$player" },
+          { "type": "uint256", "value": "100000000000000000000" }
+        ]
+      }
+    },
+    {
+      "id": "ch02",
+      "title": "Per-Player Factory (public testnet)",
+      "category": "smart-contract",
+      "description": "Each player calls Factory.spawn() from their wallet to get an isolated Instance on Sepolia. The factory exposes isSolved(player).",
+      "target": "0x0000000000000000000000000000000000000000",
+      "isSolvedFn": "isSolved",
+      "info": [
+        { "label": "Factory",   "value": "0x0000000000000000000000000000000000000000", "kind": "address" },
+        { "label": "Spawn",     "value": "call factory.spawn() from your wallet" },
+        { "label": "Win at",    "value": "see contract" }
+      ],
+      "downloads": [
+        { "label": "Contracts (zip)", "url": "/dist/ch02.zip" }
+      ]
+    },
+    {
+      "id": "ch03",
+      "title": "Private anvil per player",
+      "category": "smart-contract",
+      "description": "Click Spawn — you get a private anvil container with the challenge deployed, plus your own RPC URL valid for 30 minutes. Exploit it locally; the backend verifies isSolved against your instance.",
+      "mode": "private-anvil",
+      "image": "ghcr.io/your-org/ctf-ch3:1.0",
+      "timeout": 1800,
+      "info": [
+        { "label": "Mode",     "value": "private anvil per player" },
+        { "label": "Lifetime", "value": "30 minutes" }
+      ],
+      "downloads": [
+        { "label": "Contracts (zip)", "url": "/dist/ch03.zip" }
+      ]
+    },
+    {
+      "id": "ch04",
+      "title": "EIP-712 permit forgery",
+      "category": "smart-contract",
+      "description": "The vault accepts EIP-712 permits from a trusted signer. The signer is glad to issue one to you. The verifier may not check what you'd expect.",
+      "target": "0x0000000000000000000000000000000000000000",
+      "info": [
+        { "label": "Vault", "value": "0x0000000000000000000000000000000000000000", "kind": "address" }
+      ],
+      "signer": {
+        "enabled": true,
+        "label": "Get permit",
+        "type": "eip712",
+        "typedData": {
+          "domain": {
+            "name": "Vault",
+            "version": "1",
+            "chainId": "$chainId",
+            "verifyingContract": "0x0000000000000000000000000000000000000000"
+          },
+          "primaryType": "Permit",
+          "types": {
+            "EIP712Domain": [
+              {"name": "name", "type": "string"},
+              {"name": "version", "type": "string"},
+              {"name": "chainId", "type": "uint256"},
+              {"name": "verifyingContract", "type": "address"}
+            ],
+            "Permit": [
+              {"name": "spender", "type": "address"},
+              {"name": "amount", "type": "uint256"},
+              {"name": "deadline", "type": "uint256"}
+            ]
+          },
+          "message": {
+            "spender": "$player",
+            "amount": "100000000000000000000",
+            "deadline": "9999999999"
+          }
+        }
+      }
+    }
+  ]
+}

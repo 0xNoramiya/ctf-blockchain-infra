@@ -1,0 +1,10 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "ctf.fullname" . }}-challenges
+  labels: {{- include "ctf.labels" . | nindent 4 }}
+data:
+  challenges.json: |
+{{- $site := .Values.challenges.site | default dict }}
+{{- $entries := .Values.challenges.entries | default list }}
+    {{ dict "site" $site "challenges" $entries | toJson | nindent 4 }}

@@ -1,0 +1,102 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>CTF</title>
+<link rel="stylesheet" href="./style.css" />
+<!-- Optional event override. Drop a theme.css next to style.css to
+     restyle without forking the bundled stylesheet. 404s gracefully. -->
+<link rel="stylesheet" href="./theme.css" onerror="this.remove()" />
+</head>
+<body>
+
+<header class="topbar">
+  <div class="brand">
+    <h1 id="siteTitle">CTF</h1>
+    <p id="siteSubtitle" class="subtitle"></p>
+  </div>
+
+  <div class="wallet" id="wallet">
+    <button id="connectBtn" class="btn">Connect wallet</button>
+    <div class="wallet-info" id="walletInfo" hidden>
+      <span class="net" id="walletNet">…</span>
+      <span class="addr mono" id="walletAddr">0x…</span>
+      <button id="disconnectBtn" class="btn btn-ghost">Disconnect</button>
+    </div>
+  </div>
+</header>
+
+<main>
+  <section class="status-bar">
+    <span class="kv"><b>chain</b> <span id="chainLabel">…</span></span>
+    <span class="kv"><b>block</b> <span id="blockLabel" class="mono">…</span></span>
+    <span class="kv" id="balanceKv" hidden><b>your balance</b> <span id="balanceLabel" class="mono">…</span></span>
+  </section>
+
+  <section class="faucet-banner" id="faucetBanner" hidden>
+    <strong>Low gas.</strong>
+    <span id="faucetBannerBalance"></span>
+    <span class="faucet-links" id="faucetLinks"></span>
+  </section>
+
+  <details class="scoreboard" id="scoreboard">
+    <summary>Scoreboard</summary>
+    <div class="scoreboard-body" id="scoreboardBody">
+      <span class="scoreboard-empty">no solves yet</span>
+    </div>
+  </details>
+
+  <section id="cards" class="cards">
+    <div class="loading">loading challenges…</div>
+  </section>
+</main>
+
+<footer id="footer" class="footer"></footer>
+
+<div class="toast" id="toast" hidden></div>
+
+<template id="cardTpl">
+  <article class="card">
+    <header class="card-head">
+      <div>
+        <span class="card-id"></span>
+        <h2 class="card-title"></h2>
+      </div>
+      <span class="status status-pending">pending</span>
+    </header>
+    <p class="card-desc"></p>
+    <ul class="info"></ul>
+    <div class="downloads"></div>
+    <div class="actions"></div>
+    <div class="instance" hidden>
+      <div class="instance-head">your instance</div>
+      <ul class="instance-fields"></ul>
+    </div>
+    <div class="receipt" hidden>
+      <div class="receipt-head">signature</div>
+      <div class="receipt-body">
+        <span class="mono break receipt-value"></span>
+        <button class="btn btn-mini receipt-copy">copy</button>
+      </div>
+    </div>
+    <div class="flag" hidden>
+      <div class="flag-head">FLAG</div>
+      <div class="mono break flag-value"></div>
+    </div>
+    <div class="writeup" hidden>
+      <div class="writeup-head">share a writeup</div>
+      <textarea class="writeup-textarea" placeholder="# how I solved it&#10;&#10;..." maxlength="4096"></textarea>
+      <div class="writeup-foot">
+        <span class="writeup-counter">0 / 4096</span>
+        <label class="writeup-sign"><input type="checkbox" class="writeup-sign-cb" /> sign with wallet</label>
+        <button class="btn btn-mini writeup-submit">submit</button>
+      </div>
+      <div class="writeup-status" hidden></div>
+    </div>
+  </article>
+</template>
+
+<script type="module" src="./app.js"></script>
+</body>
+</html>

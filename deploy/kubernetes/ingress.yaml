@@ -1,0 +1,36 @@
+# Adjust host, ingressClassName, and TLS to match your cluster.
+# Cert-manager + Let's Encrypt setup:
+#   metadata.annotations:
+#     cert-manager.io/cluster-issuer: letsencrypt-prod
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: ctf
+  namespace: ctf
+  annotations:
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "30"
+    nginx.ingress.kubernetes.io/proxy-connect-timeout: "5"
+spec:
+  ingressClassName: nginx
+  tls:
+    - hosts:
+        - ctf.example.com
+      secretName: ctf-tls
+  rules:
+    - host: ctf.example.com
+      http:
+        paths:
+          - path: /api
+            pathType: Prefix
+            backend:
+              service:
+                name: backend
+                port:
+                  number: 8787
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: frontend
+                port:
+                  number: 80

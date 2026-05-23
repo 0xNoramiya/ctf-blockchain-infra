@@ -1,0 +1,38 @@
+{
+  "name": "ctf-blockchain-infra",
+  "image": "mcr.microsoft.com/devcontainers/javascript-node:20-bookworm",
+  "features": {
+    "ghcr.io/devcontainers/features/python:1": { "version": "3.12" },
+    "ghcr.io/devcontainers/features/github-cli:1": {},
+    "ghcr.io/devcontainers/features/docker-in-docker:2": {},
+    "ghcr.io/devcontainers-contrib/features/just:1": {}
+  },
+  "postCreateCommand": ".devcontainer/post-create.sh",
+  "forwardPorts": [5500, 8080, 8787, 8545],
+  "portsAttributes": {
+    "5500": { "label": "frontend (python -m http.server)" },
+    "8080": { "label": "frontend (docker compose)" },
+    "8787": { "label": "backend API" },
+    "8545": { "label": "anvil" }
+  },
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "JuanBlanco.solidity",
+        "NomicFoundation.hardhat-solidity",
+        "dbaeumer.vscode-eslint",
+        "skellock.just",
+        "redhat.vscode-yaml",
+        "yzhang.markdown-all-in-one"
+      ],
+      "settings": {
+        "[solidity]": { "editor.defaultFormatter": "JuanBlanco.solidity" },
+        "[javascript]": { "editor.formatOnSave": false }
+      }
+    }
+  },
+  "remoteUser": "node",
+  "containerEnv": {
+    "FORGE_DISABLE_TELEMETRY": "1"
+  }
+}

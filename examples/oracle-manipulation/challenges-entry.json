@@ -1,0 +1,17 @@
+{
+  "id": "oracle",
+  "title": "Spot the Price",
+  "category": "smart-contract",
+  "description": "A lending vault prices collateral using a minimal AMM's spot reserves. You start with a generous bag of token A. The vault holds a deep pool of token B. Why might that be a problem?",
+  "mode": "private-anvil",
+  "image": "ghcr.io/your-org/ctf-oracle:1.0",
+  "timeout": 1800,
+  "info": [
+    { "label": "Mode",     "value": "private anvil per player" },
+    { "label": "Lifetime", "value": "30 minutes" },
+    { "label": "Win at",   "value": "balance of token B >= 100,000" }
+  ],
+  "downloads": [
+    { "label": "Contracts (zip)", "url": "/dist/oracle/oracle-manipulation.zip" }
+  ]
+}

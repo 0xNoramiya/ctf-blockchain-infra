@@ -1,0 +1,17 @@
+apiVersion: v2
+name: ctf-blockchain-infra
+description: |
+  Generic on-chain CTF infrastructure: manifest-driven backend, light
+  data-driven frontend, optional per-player private-anvil launcher.
+  Supports shared-testnet and per-player container modes.
+type: application
+version: 0.1.0
+appVersion: "1.0.0"
+keywords:
+  - ctf
+  - blockchain
+  - smart-contracts
+  - foundry
+home: https://github.com/0xNoramiya/ctf-blockchain-infra
+maintainers:
+  - name: ctf-blockchain-infra contributors

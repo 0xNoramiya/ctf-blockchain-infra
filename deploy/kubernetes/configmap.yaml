@@ -1,0 +1,25 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: ctf-challenges
+  namespace: ctf
+data:
+  challenges.json: |
+    {
+      "site": {
+        "title": "Smart Contract CTF",
+        "subtitle": "On-chain challenges. Solve them, claim flags.",
+        "footer": "your-org · 2026"
+      },
+      "challenges": [
+        {
+          "id": "ch01",
+          "title": "REPLACE ME",
+          "category": "smart-contract",
+          "description": "Edit this ConfigMap with your real challenge metadata before going live.",
+          "target": "0x0000000000000000000000000000000000000000",
+          "info": [],
+          "downloads": []
+        }
+      ]
+    }

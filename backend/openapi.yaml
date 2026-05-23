@@ -1,0 +1,581 @@
+openapi: 3.1.0
+info:
+  title: ctf-blockchain-infra
+  version: "1.0.0"
+  description: |
+    HTTP surface of the ctf-blockchain-infra backend. The public
+    endpoints (`/api/{config,status,flag,sign,launch,kill,reset,instance,rpc,health}`)
+    are unauthenticated and per-IP rate-limited. The admin surface
+    (`/api/admin/*`) requires a bearer token.
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+
+servers:
+  - url: https://ctf.example.com
+    description: Default deployment URL pattern
+  - url: http://127.0.0.1:8787
+    description: Local dev backend
+
+tags:
+  - name: public
+    description: Used by player UI and exploit scripts.
+  - name: launcher
+    description: Private-anvil container lifecycle (only present when launcher is enabled).
+  - name: admin
+    description: Operator endpoints — bearer-token gated.
+  - name: ops
+    description: Health, metrics, and OpenAPI itself.
+
+security: []
+
+paths:
+  /api/health:
+    get:
+      tags: [ops]
+      summary: Liveness check
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ok: { type: boolean }
+                  challenges: { type: integer }
+                  launcher: { type: boolean }
+
+  /metrics:
+    get:
+      tags: [ops]
+      summary: Prometheus metrics
+      responses:
+        "200":
+          description: Prometheus text exposition (`text/plain; version=0.0.4`)
+          content:
+            text/plain:
+              schema: { type: string }
+
+  /api/openapi.yaml:
+    get:
+      tags: [ops]
+      summary: This spec
+      responses:
+        "200":
+          description: OpenAPI 3.1 document
+          content:
+            application/yaml:
+              schema: { type: string }
+
+  /api/writeup/{id}:
+    post:
+      tags: [public]
+      summary: Submit a writeup. Gated by on-chain isSolved(player). Optionally signed.
+      parameters:
+        - $ref: "#/components/parameters/ChallengeId"
+        - $ref: "#/components/parameters/AddressQuery"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [writeup]
+              properties:
+                writeup:   { type: string, maxLength: 4096 }
+                timestamp: { type: integer, description: "ms since epoch — required when signing" }
+                signature: { type: string,  description: "personal_sign over the canonical writeup message — required when signing" }
+      responses:
+        "200":
+          description: Accepted.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  accepted: { type: boolean }
+                  ts:       { type: string }
+                  bytes:    { type: integer }
+                  signed:   { type: boolean }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401":
+          description: signature does not match address.
+        "403":
+          description: player has not satisfied isSolved yet.
+        "429": { $ref: "#/components/responses/RateLimited" }
+
+  /api/writeup/limits:
+    get:
+      tags: [public]
+      summary: Writeup size + signature-mode configuration. Lets the frontend size its textarea and decide whether to force the signed path.
+      responses:
+        "200":
+          description: Limits + mode flags.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  maxBytes:         { type: integer }
+                  requireSignature: { type: boolean }
+                  signatureSkewMs:  { type: integer }
+
+  /api/scoreboard:
+    get:
+      tags: [public]
+      summary: Per-challenge solve aggregates (counts + first-blood). No PII gating, fine to point a spectator UI at.
+      responses:
+        "200":
+          description: Scoreboard snapshot.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  generatedAt: { type: integer }
+                  board:
+                    type: object
+                    additionalProperties:
+                      type: object
+                      properties:
+                        solveCount:      { type: integer }
+                        currentlySolved: { type: integer }
+                        firstBlood:
+                          oneOf:
+                            - type: object
+                              properties:
+                                player: { type: string }
+                                ts:     { type: integer }
+                            - type: "null"
+                        solves:
+                          type: array
+                          items:
+                            type: object
+                            properties:
+                              player:  { type: string }
+                              ts:      { type: integer }
+                              current: { type: boolean }
+
+  /api/config:
+    get:
+      tags: [public]
+      summary: Public site + challenge metadata. No secrets.
+      responses:
+        "200":
+          description: Site + challenges
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Config"
+
+  /api/status/{id}:
+    get:
+      tags: [public]
+      summary: Has this player satisfied isSolved on this challenge?
+      parameters:
+        - $ref: "#/components/parameters/ChallengeId"
+        - $ref: "#/components/parameters/AddressQuery"
+      responses:
+        "200":
+          description: Status snapshot
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Status" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+        "502": { $ref: "#/components/responses/RpcError" }
+
+  /api/flag/{id}:
+    get:
+      tags: [public]
+      summary: Read the flag if the player has satisfied isSolved.
+      parameters:
+        - $ref: "#/components/parameters/ChallengeId"
+        - $ref: "#/components/parameters/AddressQuery"
+      responses:
+        "200":
+          description: Solve result; flag included only when solved is true.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Flag" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+
+  /api/sign/{id}:
+    get:
+      tags: [public]
+      summary: Backend-issued signature (only on challenges with signer.enabled).
+      parameters:
+        - $ref: "#/components/parameters/ChallengeId"
+        - $ref: "#/components/parameters/AddressQuery"
+      responses:
+        "200":
+          description: Either personal-sign or eip712-typed-data signature.
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - $ref: "#/components/schemas/PersonalSignResult"
+                  - $ref: "#/components/schemas/Eip712SignResult"
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "404":
+          description: Challenge has no signer configured.
+        "429": { $ref: "#/components/responses/RateLimited" }
+
+  /api/launch/{id}:
+    post:
+      tags: [launcher]
+      summary: Spawn a per-player anvil container.
+      parameters:
+        - $ref: "#/components/parameters/ChallengeId"
+        - $ref: "#/components/parameters/AddressQuery"
+      responses:
+        "200":
+          description: Instance metadata.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  instance: { $ref: "#/components/schemas/Instance" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+        "500": { $ref: "#/components/responses/ServerError" }
+        "503":
+          description: Launcher disabled on this server.
+
+  /api/kill/{id}:
+    post:
+      tags: [launcher]
+      summary: Stop and remove the player's container.
+      parameters:
+        - $ref: "#/components/parameters/ChallengeId"
+        - $ref: "#/components/parameters/AddressQuery"
+      responses:
+        "200":
+          description: "`{ killed: bool }`"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  killed: { type: boolean }
+
+  /api/reset/{id}:
+    post:
+      tags: [launcher]
+      summary: Revert the player's anvil state to immediately after deploy.
+      parameters:
+        - $ref: "#/components/parameters/ChallengeId"
+        - $ref: "#/components/parameters/AddressQuery"
+      responses:
+        "200":
+          description: Reset succeeded.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  reset: { type: boolean }
+        "400":
+          description: No instance, no snapshot, or wrong mode.
+
+  /api/instance/{id}:
+    get:
+      tags: [launcher]
+      summary: Read the player's current instance, or null.
+      parameters:
+        - $ref: "#/components/parameters/ChallengeId"
+        - $ref: "#/components/parameters/AddressQuery"
+      responses:
+        "200":
+          description: Instance or null.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  instance:
+                    oneOf:
+                      - $ref: "#/components/schemas/Instance"
+                      - type: "null"
+
+  /api/rpc/{instanceId}:
+    post:
+      tags: [launcher]
+      summary: |
+        Method-allowlisted JSON-RPC proxy to the player's anvil
+        container. Allowed prefixes: `eth_`, `net_`, `web3_`, `anvil_`,
+        `evm_`, `debug_`. Denied: `personal_*`, `miner_*`, `admin_*`,
+        `txpool_*`.
+      parameters:
+        - in: path
+          name: instanceId
+          required: true
+          schema: { type: string }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              description: JSON-RPC 2.0 request, single or batch.
+              oneOf:
+                - type: object
+                - type: array
+                  items: { type: object }
+      responses:
+        "200": { description: JSON-RPC response (or batch). }
+        "400": { description: invalid request. }
+        "403": { description: method not in allowlist. }
+        "404": { description: unknown instance. }
+        "410": { description: instance expired. }
+        "429": { $ref: "#/components/responses/RateLimited" }
+        "502": { description: upstream anvil error. }
+
+  /api/admin/instances:
+    get:
+      tags: [admin]
+      summary: List active private-anvil instances.
+      security: [{ AdminBearer: [] }]
+      responses:
+        "200": { description: OK }
+        "401": { description: unauthorized }
+
+  /api/admin/instances/kill-all:
+    post:
+      tags: [admin]
+      summary: Drain every running instance.
+      security: [{ AdminBearer: [] }]
+      responses:
+        "200": { description: OK }
+
+  /api/admin/instances/{challengeId}/{player}/kill:
+    post:
+      tags: [admin]
+      summary: Force-kill one player's instance.
+      security: [{ AdminBearer: [] }]
+      parameters:
+        - in: path
+          name: challengeId
+          required: true
+          schema: { type: string }
+        - in: path
+          name: player
+          required: true
+          schema: { type: string, format: address }
+      responses:
+        "200": { description: OK }
+
+  /api/admin/solves:
+    get:
+      tags: [admin]
+      summary: Dump the in-memory solve tracker.
+      security: [{ AdminBearer: [] }]
+      responses:
+        "200": { description: OK }
+
+  /api/admin/challenges:
+    get:
+      tags: [admin]
+      summary: Per-challenge summary (mode, target, signer status).
+      security: [{ AdminBearer: [] }]
+      responses:
+        "200": { description: OK }
+
+  /api/admin/manifest/reload:
+    post:
+      tags: [admin]
+      summary: Re-read challenges.json from disk and reconcile.
+      security: [{ AdminBearer: [] }]
+      responses:
+        "200":
+          description: Reload result.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  reloaded: { type: boolean }
+                  added:    { type: array, items: { type: string } }
+                  removed:  { type: array, items: { type: string } }
+                  total:    { type: integer }
+        "500":
+          description: Validation failed; previous manifest still active.
+
+  /api/admin/webhook/test:
+    post:
+      tags: [admin]
+      summary: Emit a synthetic webhook event.
+      security: [{ AdminBearer: [] }]
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                event:     { type: string }
+                challenge: { type: string }
+                player:    { type: string, format: address }
+                solved:    { type: boolean }
+                previous:
+                  oneOf:
+                    - { type: boolean }
+                    - { type: "null" }
+      responses:
+        "200": { description: webhook sent }
+        "400": { description: webhook not configured }
+
+components:
+  securitySchemes:
+    AdminBearer:
+      type: http
+      scheme: bearer
+      bearerFormat: opaque
+
+  parameters:
+    ChallengeId:
+      in: path
+      name: id
+      required: true
+      schema:
+        type: string
+        pattern: "^[a-z0-9_-]{1,32}$"
+    AddressQuery:
+      in: query
+      name: address
+      required: true
+      schema:
+        type: string
+        format: address
+        example: "0xAbC1234567890abcDEF1234567890ABCdef123456"
+
+  responses:
+    BadRequest:
+      description: Malformed input.
+      content:
+        application/json:
+          schema:
+            type: object
+            properties: { error: { type: string } }
+    RateLimited:
+      description: Rate limited.
+      content:
+        application/json:
+          schema:
+            type: object
+            properties: { error: { type: string } }
+    RpcError:
+      description: Upstream RPC failure.
+      content:
+        application/json:
+          schema:
+            type: object
+            properties: { error: { type: string } }
+    ServerError:
+      description: Unexpected server error.
+
+  schemas:
+    Config:
+      type: object
+      properties:
+        site:
+          type: object
+          additionalProperties: true
+        chainId: { type: integer }
+        rpcUrl:  { type: string, format: uri }
+        launcherEnabled: { type: boolean }
+        challenges:
+          type: array
+          items: { $ref: "#/components/schemas/PublicChallenge" }
+
+    PublicChallenge:
+      type: object
+      properties:
+        id:          { type: string }
+        title:       { type: string }
+        description: { type: string }
+        category:    { type: string }
+        mode: { type: string, enum: [shared, private-anvil] }
+        target:
+          oneOf:
+            - type: string
+            - type: "null"
+        info:
+          type: array
+          items:
+            type: object
+            properties:
+              label: { type: string }
+              value: { type: string }
+              kind:  { type: string, nullable: true }
+        downloads:
+          type: array
+          items:
+            type: object
+            properties:
+              label: { type: string }
+              url:   { type: string }
+        timeout:
+          oneOf: [{ type: integer }, { type: "null" }]
+        signer:
+          type: object
+          properties:
+            enabled: { type: boolean }
+            address: { type: string, nullable: true }
+            label:   { type: string, nullable: true }
+            type:    { type: string, nullable: true, enum: [personal-sign, eip712, null] }
+
+    Status:
+      type: object
+      properties:
+        solved:  { type: boolean }
+        spawned: { type: boolean }
+        target:
+          oneOf: [{ type: string }, { type: "null" }]
+        instance:
+          oneOf:
+            - $ref: "#/components/schemas/Instance"
+            - type: "null"
+
+    Flag:
+      type: object
+      properties:
+        solved: { type: boolean }
+        flag:
+          type: string
+          description: Present only when solved is true.
+
+    PersonalSignResult:
+      type: object
+      properties:
+        type:      { const: personal-sign }
+        player:    { type: string }
+        signer:    { type: string }
+        signature: { type: string }
+
+    Eip712SignResult:
+      type: object
+      properties:
+        type:      { const: eip712 }
+        player:    { type: string }
+        signer:    { type: string }
+        signature: { type: string }
+        primaryType: { type: string, nullable: true }
+        domain:    { type: object }
+        types:     { type: object }
+        message:   { type: object }
+
+    Instance:
+      type: object
+      properties:
+        instanceId:     { type: string }
+        fullInstanceId: { type: string }
+        mode:           { type: string, enum: [proxy, direct] }
+        rpcUrl:         { type: string }
+        target:         { type: string }
+        extra:
+          type: object
+          additionalProperties: true
+        createdAt: { type: integer }
+        expiresAt: { type: integer }

@@ -40,6 +40,7 @@ sudo ln -s "$(pwd)/bin/ctf-admin" /usr/local/bin/ctf-admin
 | `smoke <event> <challenge> <player> [solved]` | Send a synthetic webhook event. |
 | `smoke-solve <challenge>` | Run the bundled example solver end-to-end. Generates a throwaway burner, funds it from `FAUCET_KEY` (auto-defaults to anvil's deployer when `chainId=31337`), transfers any ERC20 the recipe declares, execs the solver, asserts the flag came back. |
 | `smoke-solve list` | List discovered smoke recipes (one per `examples/<dir>/.ctf-smoke.json`). |
+| `smoke-solve all` | Run every recipe sequentially with isolated burners; prints pass/fail summary and exits non-zero on any failure. Pre-event "is everything wired" check. |
 | `status <challenge> <player>` | Same call the UI polls. |
 | `flag <challenge> <player>` | Test the flag-gating path. |
 | `sign <challenge> <player>` | Mint a backend signature (replay for testing). |

@@ -58,6 +58,9 @@ Commands:
                                account 0 when chainId is 31337).
   smoke-solve list             list available smoke recipes (one per
                                examples/<dir>/.ctf-smoke.json).
+  smoke-solve all              run every recipe sequentially with isolated
+                               burners; prints a pass/fail summary and
+                               exits non-zero if anything failed.
 
   status <challenge> <player>  GET /api/status/:id?address=...
   flag   <challenge> <player>  GET /api/flag/:id?address=...
@@ -95,7 +98,12 @@ async function api(path, { method = "GET", body = null, headers = {}, admin = fa
   catch { return { raw: text }; }
 }
 
-function die(msg) { stderr.write(`error: ${msg}\n`); exit(1); }
+let SOFT_FAIL = false;
+function die(msg) {
+  if (SOFT_FAIL) throw new Error(msg);
+  stderr.write(`error: ${msg}\n`);
+  exit(1);
+}
 function out(obj) {
   if (wantJson) stdout.write(JSON.stringify(obj, null, 2) + "\n");
   else stdout.write(typeof obj === "string" ? obj + "\n" : JSON.stringify(obj, null, 2) + "\n");
@@ -216,7 +224,32 @@ const handlers = {
       if (rows.length === 0) return out("no .ctf-smoke.json files found under examples/");
       return out(`${rows.length} recipe(s):\n` + rows.join("\n"));
     }
-    if (!challengeId) die("usage: smoke-solve <challenge> | smoke-solve list");
+    if (challengeId === "all" || rest.includes("--all")) {
+      const recipes = loadSmokeRecipes();
+      const ids = Object.keys(recipes).sort();
+      if (ids.length === 0) die("no .ctf-smoke.json files found under examples/");
+      const results = [];
+      SOFT_FAIL = true;
+      for (const id of ids) {
+        process.stdout.write(`\n=== smoke-solve ${id} ===\n`);
+        try {
+          await smokeSolve(id);
+          results.push([id, true, null]);
+        } catch (e) {
+          results.push([id, false, e.message ?? String(e)]);
+          stderr.write(`✗ ${id}: ${e.message ?? e}\n`);
+        }
+      }
+      SOFT_FAIL = false;
+      process.stdout.write(`\n=== summary ===\n`);
+      const passed = results.filter(r => r[1]).length;
+      for (const [id, ok_, err] of results) {
+        process.stdout.write(`${ok_ ? "✓" : "✗"} ${id.padEnd(14)}${err ? "  " + err : ""}\n`);
+      }
+      process.stdout.write(`\n${passed}/${results.length} passed\n`);
+      exit(passed === results.length ? 0 : 1);
+    }
+    if (!challengeId) die("usage: smoke-solve <challenge> | smoke-solve list | smoke-solve all");
     await smokeSolve(challengeId);
   },
 

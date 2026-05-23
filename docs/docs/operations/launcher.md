@@ -74,7 +74,7 @@ A challenge image must:
 4. Stay foreground.
 
 The `contracts-template/private-anvil/` directory ships a working
-example. See [the template README](../../../contracts-template/private-anvil/README.md).
+example. See [the template README](https://github.com/0xNoramiya/ctf-blockchain-infra/blob/main/contracts-template/private-anvil/README.md).
 
 ## API
 

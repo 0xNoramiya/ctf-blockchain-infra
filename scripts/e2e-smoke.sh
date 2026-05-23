@@ -137,6 +137,9 @@ EOF
 note "installing backend deps"
 ( cd "$REPO_ROOT/backend" && npm install --omit=dev --no-audit --no-fund >/dev/null 2>&1 )
 
+note "installing examples deps (ethers for solvers)"
+( cd "$REPO_ROOT/examples" && npm install --no-audit --no-fund >/dev/null 2>&1 )
+
 note "starting backend on :$BACKEND_PORT"
 ( cd "$REPO_ROOT/backend" && env $(grep -v '^#' "$SCRATCH/backend/.env" | xargs) node server.js ) \
   > "$BACKEND_LOG" 2>&1 &

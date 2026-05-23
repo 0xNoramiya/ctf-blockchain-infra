@@ -8,7 +8,7 @@ backend/challenges.json
 contracts-template/**/out/
 contracts-template/**/cache/
 contracts-template/**/broadcast/
-contracts-template/**/lib/
+contracts-template/*/lib/
 examples/**/out/
 examples/**/cache/
 examples/**/broadcast/
@@ -22,3 +22,4 @@ frontend/dist/*.zip
 
 *.log
 .DS_Store
+examples/**/foundry.lock

@@ -1,5 +1,5 @@
 # syntax=docker/dockerfile:1.7
-FROM nginx:1.27-alpine
+FROM nginx:1.31-alpine
 COPY nginx.conf /etc/nginx/conf.d/default.conf
 COPY index.html style.css app.js /usr/share/nginx/html/
 RUN mkdir -p /usr/share/nginx/html/dist /usr/share/nginx/html/img
